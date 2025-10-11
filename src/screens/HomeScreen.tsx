@@ -25,8 +25,8 @@ export default function HomeScreen({ navigation }: Props) {
       padding: 20,
     },
     title: {
-      fontSize: 28,
-      fontWeight: 'bold',
+      fontSize: 16,
+      fontWeight: 'normal',
       marginBottom: 10,
       color: colors.text,
     },
@@ -50,7 +50,7 @@ export default function HomeScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Selamat Datang!</Text>
+      <Text style={styles.title}>Absen tidak ditemukan</Text>
       {/* <Text style={styles.subtitle}>Ini adalah Home Screen</Text> */}
       
       {/* <TouchableOpacity
