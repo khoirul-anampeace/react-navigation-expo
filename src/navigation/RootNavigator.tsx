@@ -1,23 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React, { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import React from 'react';
 
+import AbsensiScreen from '../screens/AbsensiScreen';
 import DetailsScreen from '../screens/DetailsScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-import LoginScreen from '../screens/auth/LoginScreen';
 
 import { useTheme } from '../context/ThemeContext';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { checkAuth } from '../store/slices/authSlice';
-import { HomeStackParamList, RootTabParamList } from '../types/navigation';
+import { HomeStackParamList, RootTabParamList, SettingsStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
+const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 const Tab = createBottomTabNavigator<RootTabParamList>();
-const AuthStack = createNativeStackNavigator();
 
 // Stack Navigator untuk Home
 function HomeStack() {
@@ -47,8 +45,41 @@ function HomeStack() {
   );
 }
 
-// Bottom Tab Navigator (Protected)
-function MainTabNavigator() {
+// Stack Navigator untuk Settings
+function SettingsStackNavigator() {
+  const { colors } = useTheme();
+  
+  return (
+    <SettingsStack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: colors.card,
+        },
+        headerTintColor: colors.text,
+        headerShadowVisible: false,
+      }}
+    >
+      <SettingsStack.Screen 
+        name="SettingsMain" 
+        component={SettingsScreen}
+        options={{ title: 'Pengaturan' }}
+      />
+      <SettingsStack.Screen 
+        name="Profile" 
+        component={ProfileScreen}
+        options={{ title: 'Profil' }}
+      />
+      <SettingsStack.Screen 
+        name="EditProfile" 
+        component={EditProfileScreen}
+        options={{ title: 'Edit Profil' }}
+      />
+    </SettingsStack.Navigator>
+  );
+}
+
+// Bottom Tab Navigator
+export default function AppNavigator() {
   const { colors } = useTheme();
   
   return (
@@ -59,8 +90,8 @@ function MainTabNavigator() {
 
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline';
+          } else if (route.name === 'Absensi') {
+            iconName = focused ? 'calendar' : 'calendar-outline';
           } else if (route.name === 'Settings') {
             iconName = focused ? 'settings' : 'settings-outline';
           } else {
@@ -91,59 +122,21 @@ function MainTabNavigator() {
         }}
       />
       <Tab.Screen 
-        name="Profile" 
-        component={ProfileScreen}
+        name="Absensi" 
+        component={AbsensiScreen}
         options={{ 
-          headerTitle: 'Profil',
-          tabBarLabel: 'Profil' 
+          headerTitle: 'Absensi',
+          tabBarLabel: 'Absensi' 
         }}
       />
       <Tab.Screen 
         name="Settings" 
-        component={SettingsScreen}
+        component={SettingsStackNavigator}
         options={{ 
-          headerTitle: 'Pengaturan',
+          headerShown: false,
           tabBarLabel: 'Pengaturan' 
         }}
       />
     </Tab.Navigator>
   );
-}
-
-// Auth Navigator (Login, Register, dll)
-function AuthNavigator() {
-  return (
-    <AuthStack.Navigator screenOptions={{ headerShown: false }}>
-      <AuthStack.Screen name="Login" component={LoginScreen} />
-    </AuthStack.Navigator>
-  );
-}
-
-// Root Navigator - Menentukan auth atau main app
-export default function RootNavigator() {
-  const dispatch = useAppDispatch();
-  const { isAuthenticated, isLoading } = useAppSelector((state) => state.auth);
-  const { colors } = useTheme();
-
-  // Check auth saat app pertama kali dibuka
-  useEffect(() => {
-    dispatch(checkAuth());
-  }, [dispatch]);
-
-  // Show loading splash saat check auth
-  if (isLoading) {
-    return (
-      <View style={{ 
-        flex: 1, 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        backgroundColor: colors.background 
-      }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
-  // Return auth atau main navigator based on auth status
-  return isAuthenticated ? <MainTabNavigator /> : <AuthNavigator />;
 }

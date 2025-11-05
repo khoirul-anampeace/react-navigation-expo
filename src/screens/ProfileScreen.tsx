@@ -1,3 +1,5 @@
+import { Ionicons } from '@expo/vector-icons';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect } from 'react';
 import {
   ActivityIndicator,
@@ -13,8 +15,18 @@ import { useTheme } from '../context/ThemeContext';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logoutUser } from '../store/slices/authSlice';
 import { fetchEmployeeByUserId } from '../store/slices/employeeSlice';
+import { SettingsStackParamList } from '../types/navigation';
 
-export default function ProfileScreen() {
+type ProfileScreenNavigationProp = NativeStackNavigationProp<
+  SettingsStackParamList,
+  'Profile'
+>;
+
+interface Props {
+  navigation: ProfileScreenNavigationProp;
+}
+
+export default function ProfileScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
@@ -137,6 +149,23 @@ export default function ProfileScreen() {
       color: colors.primary,
       fontWeight: '600',
       textTransform: 'capitalize',
+      marginBottom: 15,
+    },
+    editButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.card,
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    editButtonText: {
+      color: colors.primary,
+      fontSize: 14,
+      fontWeight: '600',
+      marginLeft: 6,
     },
     section: {
       marginHorizontal: 20,
@@ -299,7 +328,15 @@ export default function ProfileScreen() {
           <Text style={styles.employeeCode}>
             {currentEmployee?.employee_code || '-'}
           </Text>
-          <Text style={styles.role}>{user?.role || 'User'}</Text>
+          {/* <Text style={styles.role}>{user?.role || 'User'}</Text> */}
+
+          <TouchableOpacity 
+            style={styles.editButton}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
+            <Ionicons name="create-outline" size={18} color={colors.primary} />
+            <Text style={styles.editButtonText}>Edit Profil</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Informasi Pekerjaan */}
@@ -376,14 +413,6 @@ export default function ProfileScreen() {
             </View>
           </View>
         </View>
-
-        {/* Logout Button */}
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
-        >
-          <Text style={styles.logoutButtonText}>Keluar</Text>
-        </TouchableOpacity>
       </ScrollView>
     </View>
   );
