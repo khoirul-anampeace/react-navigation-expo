@@ -1,11 +1,12 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import authService, { LoginCredentials, User } from '../../services/authService';
+import authService, { LoginCredentials, UpdateUserData, User } from '../../services/authService';
 
 interface AuthState {
   user: User | null;
   accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isUpdating: boolean;
   error: string | null;
 }
 
@@ -14,6 +15,7 @@ const initialState: AuthState = {
   accessToken: null,
   isAuthenticated: false,
   isLoading: false,
+  isUpdating: false,
   error: null,
 };
 
@@ -63,6 +65,22 @@ export const checkAuth = createAsyncThunk(
       return null;
     } catch (error: any) {
       return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Async thunk untuk update user
+export const updateUserData = createAsyncThunk(
+  'auth/updateUser',
+  async (
+    { userId, data }: { userId: number; data: UpdateUserData },
+    { rejectWithValue }
+  ) => {
+    try {
+      const user = await authService.updateUser(userId, data);
+      return user;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Gagal mengupdate data user');
     }
   }
 );
@@ -132,6 +150,22 @@ const authSlice = createSlice({
       .addCase(checkAuth.rejected, (state) => {
         state.isLoading = false;
         state.isAuthenticated = false;
+      });
+
+    // Update User
+    builder
+      .addCase(updateUserData.pending, (state) => {
+        state.isUpdating = true;
+        state.error = null;
+      })
+      .addCase(updateUserData.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        state.user = action.payload;
+        state.error = null;
+      })
+      .addCase(updateUserData.rejected, (state, action) => {
+        state.isUpdating = false;
+        state.error = action.payload as string;
       });
   },
 });

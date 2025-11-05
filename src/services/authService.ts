@@ -26,6 +26,18 @@ export interface User {
   role: string;
 }
 
+export interface UpdateUserData {
+  email?: string;
+  password?: string;
+  role?: string;
+}
+
+export interface UpdateUserResponse {
+  success: boolean;
+  message: string;
+  user: User;
+}
+
 class AuthService {
   // Login function
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
@@ -84,6 +96,37 @@ class AuthService {
       return await AsyncStorage.getItem('accessToken');
     } catch (error) {
       return null;
+    }
+  }
+
+  // Update user (email, password, role)
+  async updateUser(userId: number, data: UpdateUserData): Promise<User> {
+    try {
+      // Backend require role juga, jadi kita sertakan
+      const updatePayload = {
+        ...data,
+        role: data.role || 'employee', // Default ke 'employee' jika tidak ada
+      };
+
+      console.log('📤 Updating user:', { userId, data: updatePayload });
+      
+      const response = await apiClient.put<UpdateUserResponse>(
+        `/auth/users/${userId}`,
+        updatePayload
+      );
+
+      // Update user di AsyncStorage jika email berubah
+      if (data.email && response.data.user) {
+        await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+
+      console.log('📥 User updated:', response.data.user);
+      return response.data.user;
+    } catch (error: any) {
+      console.error('❌ Update user error:', error.response?.data);
+      throw new Error(
+        error.response?.data?.message || 'Gagal mengupdate data user'
+      );
     }
   }
 }
