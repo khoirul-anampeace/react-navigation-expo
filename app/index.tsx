@@ -2,8 +2,8 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Provider } from 'react-redux';
 import { ThemeProvider } from '../src/context/ThemeContext';
+import AuthNavigator from '../src/navigation/AuthNavigator';
 import RootNavigator from '../src/navigation/RootNavigator';
-import LoginScreen from '../src/screens/auth/LoginScreen';
 import { useAppSelector } from '../src/store/hooks';
 import { store } from '../src/store/store';
 
@@ -18,7 +18,7 @@ function AppContent() {
     );
   }
 
-  return isAuthenticated ? <RootNavigator /> : <LoginScreen />;
+  return isAuthenticated ? <RootNavigator /> : <AuthNavigator />;
 }
 
 export default function Index() {

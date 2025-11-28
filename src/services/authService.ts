@@ -129,6 +129,33 @@ class AuthService {
       );
     }
   }
+
+  // Update password
+  async updatePassword(
+    userId: number, 
+    oldPassword: string, 
+    newPassword: string
+  ): Promise<void> {
+    try {
+      console.log('📤 Updating password for user:', userId);
+      
+      const response = await apiClient.put(
+        `/auth/update-password/${userId}`,
+        {
+          oldPassword,
+          newPassword,
+        }
+      );
+
+      console.log('✅ Password updated successfully');
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Update password error:', error.response?.data);
+      throw new Error(
+        error.response?.data?.message || 'Gagal mengupdate password'
+      );
+    }
+  }
 }
 
 export default new AuthService();

@@ -1,5 +1,11 @@
 import { NavigatorScreenParams } from '@react-navigation/native';
 
+// Auth Stack Navigator (TAMBAHKAN INI)
+export type AuthStackParamList = {
+  Login: undefined;
+  Register: undefined;
+};
+
 // Type untuk Bottom Tab Navigator
 export type RootTabParamList = {
   Home: NavigatorScreenParams<HomeStackParamList>;
@@ -21,4 +27,5 @@ export type SettingsStackParamList = {
   SettingsMain: undefined;
   Profile: undefined;
   EditProfile: undefined;
+  ChangePassword: undefined;
 };

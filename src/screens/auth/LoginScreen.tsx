@@ -1,20 +1,21 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { clearError, loginUser } from '../../store/slices/authSlice';
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -76,10 +77,10 @@ export default function LoginScreen() {
       fontSize: 32,
       fontWeight: 'bold',
       color: colors.text,
-      marginBottom: 10,
+      marginBottom: 0,
     },
     subtitle: {
-      fontSize: 16,
+      fontSize: 14,
       color: colors.textSecondary,
       marginBottom: 40,
     },
@@ -105,15 +106,21 @@ export default function LoginScreen() {
     passwordContainer: {
       position: 'relative',
     },
+    passwordInput: {
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      paddingHorizontal: 15,
+      paddingVertical: 12,
+      paddingRight: 50,
+      fontSize: 16,
+      color: colors.text,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
     passwordToggle: {
       position: 'absolute',
       right: 15,
-      top: 12,
-    },
-    passwordToggleText: {
-      color: colors.primary,
-      fontSize: 14,
-      fontWeight: '600',
+      top: 14,
     },
     forgotPassword: {
       alignSelf: 'flex-end',
@@ -162,8 +169,8 @@ export default function LoginScreen() {
     >
       <View style={styles.keyboardView}>
         <View style={styles.content}>
-          <Text style={styles.title}>Selamat Datang!</Text>
-          <Text style={styles.subtitle}>Silakan login untuk melanjutkan</Text>
+          <Text style={styles.title}>Presensi Karyawan!</Text>
+          <Text style={styles.subtitle}>Silahkan login untuk masuk</Text>
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Email</Text>
@@ -184,7 +191,7 @@ export default function LoginScreen() {
             <Text style={styles.label}>Password</Text>
             <View style={styles.passwordContainer}>
               <TextInput
-                style={styles.input}
+                style={styles.passwordInput}
                 placeholder="Masukkan password"
                 placeholderTextColor={colors.textSecondary}
                 value={password}
@@ -198,14 +205,26 @@ export default function LoginScreen() {
                 onPress={() => setShowPassword(!showPassword)}
                 disabled={isLoading}
               >
-                <Text style={styles.passwordToggleText}>
-                  {showPassword ? 'Sembunyikan' : 'Lihat'}
-                </Text>
+                <Ionicons 
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'} 
+                  size={22} 
+                  color={colors.textSecondary} 
+                />
               </TouchableOpacity>
             </View>
           </View>
 
-          <TouchableOpacity style={styles.forgotPassword} disabled={isLoading}>
+          <TouchableOpacity
+            style={styles.forgotPassword}
+            disabled={isLoading}
+            onPress={() =>
+              Alert.alert(
+                'Lupa Password',
+                'Silakan hubungi admin untuk mereset password Anda.',
+                [{ text: 'OK' }]
+              )
+            }
+          >
             <Text style={styles.forgotPasswordText}>Lupa Password?</Text>
           </TouchableOpacity>
 
@@ -221,12 +240,15 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
-          {/* <View style={styles.registerContainer}>
+          <View style={styles.registerContainer}>
             <Text style={styles.registerText}>Belum punya akun?</Text>
-            <TouchableOpacity disabled={isLoading}>
+            <TouchableOpacity
+              disabled={isLoading}
+              onPress={() => navigation.navigate('Register')}
+            >
               <Text style={styles.registerLink}>Daftar Sekarang</Text>
             </TouchableOpacity>
-          </View> */}
+          </View>
         </View>
       </View>
     </KeyboardAvoidingView>

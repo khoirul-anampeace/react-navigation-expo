@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 
 import AbsensiScreen from '../screens/AbsensiScreen';
+import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import DetailsScreen from '../screens/DetailsScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import HomeScreen from '../screens/HomeScreen';
@@ -73,6 +74,11 @@ function SettingsStackNavigator() {
         name="EditProfile" 
         component={EditProfileScreen}
         options={{ title: 'Edit Profil' }}
+      />
+      <SettingsStack.Screen 
+        name="ChangePassword" 
+        component={ChangePasswordScreen}
+        options={{ title: 'Ubah Password' }}
       />
     </SettingsStack.Navigator>
   );
