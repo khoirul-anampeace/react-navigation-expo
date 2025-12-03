@@ -2,7 +2,7 @@
 
 // Face Recognition Service - Python API Integration
 
-const PYTHON_API_URL = 'http://10.10.180.241:8000'; // Sesuaikan dengan IP Anda
+const PYTHON_API_URL = 'http://192.168.1.21:8000'; // Sesuaikan dengan IP Anda
 
 /**
  * Encode single face from photo
