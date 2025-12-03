@@ -104,7 +104,7 @@ export default function SettingsScreen({ navigation }: Props) {
           <Text style={styles.arrow}>›</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('ChangePassword')}>
           <Text style={styles.settingLabel}>Ubah Password</Text>
           <Text style={styles.arrow}>›</Text>
         </TouchableOpacity>
