@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -14,9 +15,9 @@ import {
   View
 } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { DEPARTMENT_OPTIONS, getPositionsForDepartment } from '../constants/employeeOptions';
 import { useTheme } from '../context/ThemeContext';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { updateUserData } from '../store/slices/authSlice';
 import { clearUpdateSuccess, updateEmployee } from '../store/slices/employeeSlice';
 import { SettingsStackParamList } from '../types/navigation';
 
@@ -52,6 +53,8 @@ export default function EditProfileScreen({ navigation }: Props) {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [showDepartmentPicker, setShowDepartmentPicker] = useState(false);
+  const [showPositionPicker, setShowPositionPicker] = useState(false);
 
   // Load data saat pertama kali
   useEffect(() => {
@@ -190,26 +193,14 @@ export default function EditProfileScreen({ navigation }: Props) {
             setIsSaving(true);
 
             try {
-              // Update user (email) jika berubah
-              if (formData.email !== user.email) {
-                await dispatch(
-                  updateUserData({
-                    userId: user.id,
-                    data: {
-                      email: formData.email.trim(),
-                      role: user.role || 'employee', // Kirim role juga
-                    },
-                  })
-                ).unwrap();
-              }
-
-              // Update employee data dengan camelCase
+              // Kirim semua data dalam 1 request dengan camelCase
+              // TIDAK kirim hireDate karena itu hanya untuk web admin
               const updateData = {
                 fullName: formData.full_name.trim() || currentEmployee.full_name,
                 department: formData.department.trim() || currentEmployee.department || '',
                 position: formData.position.trim() || currentEmployee.position || '',
                 phone: formData.phone.trim() || currentEmployee.phone || '',
-                hireDate: currentEmployee.hire_date,
+                email: formData.email.trim() || user.email,
               };
 
               console.log('🚀 Sending update data:', updateData);
@@ -272,6 +263,9 @@ export default function EditProfileScreen({ navigation }: Props) {
     }
   };
 
+  // Get available positions based on selected department
+  const availablePositions = getPositionsForDepartment(formData.department);
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -323,6 +317,26 @@ export default function EditProfileScreen({ navigation }: Props) {
     },
     inputError: {
       borderColor: colors.danger,
+    },
+    pickerButton: {
+      backgroundColor: isDarkMode ? '#2C2C2E' : '#F2F2F7',
+      borderRadius: 10,
+      paddingHorizontal: 15,
+      paddingVertical: 12,
+      fontSize: 15,
+      borderWidth: 1,
+      borderColor: colors.border,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    pickerButtonText: {
+      fontSize: 15,
+      color: colors.text,
+    },
+    pickerButtonPlaceholder: {
+      fontSize: 15,
+      color: colors.textSecondary,
     },
     errorText: {
       fontSize: 12,
@@ -390,6 +404,53 @@ export default function EditProfileScreen({ navigation }: Props) {
       fontSize: 13,
       color: colors.textSecondary,
       lineHeight: 18,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'flex-end',
+    },
+    modalContent: {
+      backgroundColor: colors.card,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingBottom: 30,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    modalCloseButton: {
+      padding: 5,
+    },
+    modalOption: {
+      paddingVertical: 15,
+      paddingHorizontal: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    modalOptionLast: {
+      borderBottomWidth: 0,
+    },
+    modalOptionText: {
+      fontSize: 16,
+      color: colors.text,
+    },
+    modalOptionSelected: {
+      backgroundColor: isDarkMode ? 'rgba(33, 150, 243, 0.1)' : '#E3F2FD',
+    },
+    modalOptionTextSelected: {
+      color: colors.primary,
+      fontWeight: '600',
     },
   });
 
@@ -507,30 +568,68 @@ export default function EditProfileScreen({ navigation }: Props) {
           <View style={styles.card}>
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Departemen</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.department}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, department: text })
-                }
-                placeholder="Masukkan departemen"
-                placeholderTextColor={colors.textSecondary}
-                editable={!isSaving}
-              />
+              <TouchableOpacity
+                style={styles.pickerButton}
+                onPress={() => !isSaving && setShowDepartmentPicker(true)}
+                disabled={isSaving}
+              >
+                <Text
+                  style={
+                    formData.department
+                      ? styles.pickerButtonText
+                      : styles.pickerButtonPlaceholder
+                  }
+                >
+                  {formData.department || 'Pilih departemen'}
+                </Text>
+                <Ionicons
+                  name="chevron-down"
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </TouchableOpacity>
             </View>
 
             <View style={[styles.inputGroup, styles.inputGroupLast]}>
               <Text style={styles.label}>Posisi</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.position}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, position: text })
-                }
-                placeholder="Masukkan posisi"
-                placeholderTextColor={colors.textSecondary}
-                editable={!isSaving}
-              />
+              <TouchableOpacity
+                style={styles.pickerButton}
+                onPress={() => {
+                  if (!formData.department) {
+                    Toast.show({
+                      type: 'info',
+                      text1: 'ℹ️ Info',
+                      text2: 'Pilih departemen terlebih dahulu',
+                      position: 'top',
+                      visibilityTime: 2000,
+                      topOffset: 60,
+                    });
+                    return;
+                  }
+                  if (!isSaving) setShowPositionPicker(true);
+                }}
+                disabled={isSaving || !formData.department}
+              >
+                <Text
+                  style={
+                    formData.position
+                      ? styles.pickerButtonText
+                      : styles.pickerButtonPlaceholder
+                  }
+                >
+                  {formData.position || 'Pilih posisi'}
+                </Text>
+                <Ionicons
+                  name="chevron-down"
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </TouchableOpacity>
+              {!formData.department && (
+                <Text style={styles.helperText}>
+                  Pilih departemen terlebih dahulu
+                </Text>
+              )}
             </View>
           </View>
         </View>
@@ -564,6 +663,118 @@ export default function EditProfileScreen({ navigation }: Props) {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Department Picker Modal */}
+      <Modal
+        visible={showDepartmentPicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowDepartmentPicker(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowDepartmentPicker(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Pilih Departemen</Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowDepartmentPicker(false)}
+              >
+                <Ionicons name="close" size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView>
+              {DEPARTMENT_OPTIONS.map((option, index) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.modalOption,
+                    index === DEPARTMENT_OPTIONS.length - 1 &&
+                      styles.modalOptionLast,
+                    formData.department === option.value &&
+                      styles.modalOptionSelected,
+                  ]}
+                  onPress={() => {
+                    setFormData({
+                      ...formData,
+                      department: option.value,
+                      position: '', // Reset position saat department berubah
+                    });
+                    setShowDepartmentPicker(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.modalOptionText,
+                      formData.department === option.value &&
+                        styles.modalOptionTextSelected,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Position Picker Modal */}
+      <Modal
+        visible={showPositionPicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowPositionPicker(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowPositionPicker(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Pilih Posisi</Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowPositionPicker(false)}
+              >
+                <Ionicons name="close" size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView>
+              {availablePositions.map((option, index) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.modalOption,
+                    index === availablePositions.length - 1 &&
+                      styles.modalOptionLast,
+                    formData.position === option.value &&
+                      styles.modalOptionSelected,
+                  ]}
+                  onPress={() => {
+                    setFormData({ ...formData, position: option.value });
+                    setShowPositionPicker(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.modalOptionText,
+                      formData.position === option.value &&
+                        styles.modalOptionTextSelected,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
