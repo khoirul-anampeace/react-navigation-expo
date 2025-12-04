@@ -1,9 +1,17 @@
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import attendanceService, { AttendanceEntry } from '../services/attendanceService';
+import employeeService from '../services/employeeService';
+import { useAppSelector } from '../store/hooks';
 
 export default function AbsensiScreen() {
   const { colors } = useTheme();
+  const authUser = useAppSelector((s) => s.auth.user);
+
+  const [attendance, setAttendance] = useState<AttendanceEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const styles = StyleSheet.create({
     container: {
@@ -111,6 +119,47 @@ export default function AbsensiScreen() {
     return date.toLocaleDateString('id-ID', options);
   };
 
+  useEffect(() => {
+    const load = async () => {
+      if (!authUser?.id) return;
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // First get employee record by user id to obtain employee id
+        const employee = await employeeService.getEmployeeByUserId(authUser.id);
+        const items = await attendanceService.getByEmployeeId(employee.id);
+        setAttendance(items);
+      } catch (err: any) {
+        console.error('Load attendance error', err);
+        setError(err.message || 'Gagal memuat absensi');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    load();
+  }, [authUser]);
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'present':
+        return 'Hadir';
+      case 'late':
+        return 'Terlambat';
+      case 'absent':
+        return 'Tidak Hadir';
+      case 'on_leave':
+      case 'leave':
+        return 'Cuti';
+      case 'sick':
+        return 'Sakit';
+      default:
+        // Capitalize first letter
+        return status ? status.charAt(0).toUpperCase() + status.slice(1) : status;
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* <View style={styles.header}>
@@ -137,30 +186,42 @@ export default function AbsensiScreen() {
 
       <View style={styles.historySection}>
         {/* <Text style={styles.sectionTitle}>Riwayat Absensi</Text> */}
-        
-        <View style={styles.historyItem}>
-          <View>
-            <Text style={styles.historyDate}>Senin, 28 Oktober 2024</Text>
-            <Text style={styles.historyTime}>Masuk: 08:00 | Pulang: 17:00</Text>
-          </View>
-          <Text style={styles.historyStatus}>Hadir</Text>
-        </View>
 
-        <View style={styles.historyItem}>
-          <View>
-            <Text style={styles.historyDate}>Jumat, 25 Oktober 2024</Text>
-            <Text style={styles.historyTime}>Masuk: 08:15 | Pulang: 17:05</Text>
-          </View>
-          <Text style={styles.historyStatus}>Hadir</Text>
-        </View>
+        {isLoading ? (
+          <ActivityIndicator size="small" color={colors.primary} />
+        ) : error ? (
+          <Text style={{ color: colors.danger }}>{error}</Text>
+        ) : attendance.length === 0 ? (
+          <Text style={{ color: colors.textSecondary }}>Belum ada data absensi</Text>
+        ) : (
+          attendance.map((item) => {
+            const dateObj = new Date(item.date);
+            const dateLabel = dateObj.toLocaleDateString('id-ID', {
+              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
 
-        <View style={styles.historyItem}>
-          <View>
-            <Text style={styles.historyDate}>Kamis, 24 Oktober 2024</Text>
-            <Text style={styles.historyTime}>Masuk: 08:05 | Pulang: 17:02</Text>
-          </View>
-          <Text style={styles.historyStatus}>Hadir</Text>
-        </View>
+            const formatTime = (iso?: string | null) => {
+              if (!iso) return '-';
+              try {
+                return new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+              } catch {
+                return iso;
+              }
+            };
+
+            const statusColor = item.status === 'present' ? '#4CAF50' : item.status === 'late' ? '#FF9800' : '#F44336';
+
+            return (
+              <View key={item.id} style={styles.historyItem}>
+                <View>
+                  <Text style={styles.historyDate}>{dateLabel}</Text>
+                  <Text style={styles.historyTime}>Masuk: {formatTime(item.check_in_time || item.check_in)} | Pulang: {formatTime(item.check_out_time || item.check_out)}</Text>
+                </View>
+                <Text style={[styles.historyStatus, { color: statusColor }]}>{getStatusLabel(item.status)}</Text>
+              </View>
+            );
+          })
+        )}
       </View>
     </View>
   );
