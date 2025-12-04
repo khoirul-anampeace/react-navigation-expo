@@ -455,9 +455,6 @@ export default function HomeScreen({ navigation }: Props) {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Aktivitas Terbaru</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAll}>Lihat Semua</Text>
-          </TouchableOpacity>
         </View>
 
         {loadingAttendance ? (
