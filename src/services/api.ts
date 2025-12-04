@@ -3,8 +3,7 @@ import axios from 'axios';
 
 // Base URL API 
 // const API_BASE_URL = 'http://localhost:5000/api';
-// const API_BASE_URL = 'http://10.10.6.62:5000/api';
-const API_BASE_URL = 'http://192.168.1.21:5000/api';
+const API_BASE_URL = 'http://10.10.173.3:5000/api';
 
 // Create axios instance
 const apiClient = axios.create({
