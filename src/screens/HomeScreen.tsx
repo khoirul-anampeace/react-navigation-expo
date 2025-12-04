@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import attendanceService, { AttendanceEntry } from '../services/attendanceService';
 import workScheduleService, { WorkSchedule } from '../services/workScheduleService';
@@ -36,24 +37,41 @@ export default function HomeScreen({ navigation }: Props) {
     }
   }, [user?.id, currentEmployee, dispatch]);
 
-  // Load attendance when we have employee
-  useEffect(() => {
-    const load = async () => {
-      if (!currentEmployee?.id) return;
-      setLoadingAttendance(true);
-      try {
-        const items = await attendanceService.getByEmployeeId(currentEmployee.id);
-        setAttendance(items || []);
-      } catch (e) {
-        console.error('Error loading attendance for home', e);
-        setAttendance([]);
-      } finally {
-        setLoadingAttendance(false);
-      }
-    };
+  // Load attendance when we have employee (exposed as loadAttendance for refresh)
+  const [refreshing, setRefreshing] = useState(false);
 
-    load();
-  }, [currentEmployee]);
+  const loadAttendance = useCallback(async () => {
+    if (!currentEmployee?.id) return;
+    setLoadingAttendance(true);
+    try {
+      const items = await attendanceService.getByEmployeeId(currentEmployee.id);
+      setAttendance(items || []);
+    } catch (e) {
+      console.error('Error loading attendance for home', e);
+      setAttendance([]);
+    } finally {
+      setLoadingAttendance(false);
+      setRefreshing(false);
+    }
+  }, [currentEmployee?.id]);
+
+  useEffect(() => {
+    loadAttendance();
+  }, [loadAttendance]);
+
+  // Reload when screen comes into focus (e.g., after presensi on Absensi screen)
+  useFocusEffect(
+    useCallback(() => {
+      if (currentEmployee?.id) {
+        loadAttendance();
+      }
+    }, [loadAttendance, currentEmployee?.id])
+  );
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadAttendance();
+  }, [loadAttendance]);
 
   // Load schedules
   useEffect(() => {
@@ -357,7 +375,11 @@ export default function HomeScreen({ navigation }: Props) {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />}
+    >
       <View style={styles.header}>
         <Text style={styles.greeting}>{getGreeting()},</Text>
         <Text style={styles.userName}>

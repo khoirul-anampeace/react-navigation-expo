@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import attendanceService, { AttendanceEntry } from '../services/attendanceService';
 import employeeService from '../services/employeeService';
@@ -119,27 +120,41 @@ export default function AbsensiScreen() {
     return date.toLocaleDateString('id-ID', options);
   };
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadAttendance = useCallback(async () => {
+    if (!authUser?.id) return;
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // First get employee record by user id to obtain employee id
+      const employee = await employeeService.getEmployeeByUserId(authUser.id);
+      const items = await attendanceService.getByEmployeeId(employee.id);
+      setAttendance(items);
+    } catch (err: any) {
+      console.error('Load attendance error', err);
+      setError(err.message || 'Gagal memuat absensi');
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
+    }
+  }, [authUser?.id]);
+
   useEffect(() => {
-    const load = async () => {
-      if (!authUser?.id) return;
-      setIsLoading(true);
-      setError(null);
+    loadAttendance();
+  }, [loadAttendance]);
 
-      try {
-        // First get employee record by user id to obtain employee id
-        const employee = await employeeService.getEmployeeByUserId(authUser.id);
-        const items = await attendanceService.getByEmployeeId(employee.id);
-        setAttendance(items);
-      } catch (err: any) {
-        console.error('Load attendance error', err);
-        setError(err.message || 'Gagal memuat absensi');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  useFocusEffect(
+    useCallback(() => {
+      if (authUser?.id) loadAttendance();
+    }, [loadAttendance, authUser?.id])
+  );
 
-    load();
-  }, [authUser]);
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadAttendance();
+  }, [loadAttendance]);
 
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -161,7 +176,7 @@ export default function AbsensiScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />}>
       {/* <View style={styles.header}>
         <Text style={styles.title}>Absensi Hari Ini</Text>
         <Text style={styles.dateText}>{getCurrentDate()}</Text>
@@ -223,6 +238,6 @@ export default function AbsensiScreen() {
           })
         )}
       </View>
-    </View>
+    </ScrollView>
   );
 }
