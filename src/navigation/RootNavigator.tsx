@@ -35,7 +35,7 @@ function HomeStack() {
       <Stack.Screen 
         name="HomeMain" 
         component={HomeScreen}
-        options={{ title: 'Beranda' }}
+        options={{ title: 'Home' }}
       />
       <Stack.Screen 
         name="Details" 
@@ -124,7 +124,7 @@ export default function AppNavigator() {
         component={HomeStack}
         options={{ 
           headerShown: false,
-          tabBarLabel: 'Beranda' 
+          tabBarLabel: 'Home' 
         }}
       />
       <Tab.Screen 
