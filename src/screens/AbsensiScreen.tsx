@@ -1,4 +1,3 @@
-import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
@@ -145,12 +144,6 @@ export default function AbsensiScreen() {
     loadAttendance();
   }, [loadAttendance]);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (authUser?.id) loadAttendance();
-    }, [loadAttendance, authUser?.id])
-  );
-
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     loadAttendance();
@@ -177,31 +170,7 @@ export default function AbsensiScreen() {
 
   return (
     <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />}>
-      {/* <View style={styles.header}>
-        <Text style={styles.title}>Absensi Hari Ini</Text>
-        <Text style={styles.dateText}>{getCurrentDate()}</Text>
-      </View>
-
-      <View style={styles.statusCard}>
-        <Text style={styles.statusTitle}>Status Absensi</Text>
-        <Text style={styles.statusValue}>Belum Absen</Text>
-      </View>
-
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Absen Masuk</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={[styles.button, styles.buttonSecondary]}>
-          <Text style={[styles.buttonText, styles.buttonTextSecondary]}>
-            Absen Pulang
-          </Text>
-        </TouchableOpacity>
-      </View> */}
-
       <View style={styles.historySection}>
-        {/* <Text style={styles.sectionTitle}>Riwayat Absensi</Text> */}
-
         {isLoading ? (
           <ActivityIndicator size="small" color={colors.primary} />
         ) : error ? (

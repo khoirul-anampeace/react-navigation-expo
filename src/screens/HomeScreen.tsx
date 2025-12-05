@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -58,15 +57,6 @@ export default function HomeScreen({ navigation }: Props) {
   useEffect(() => {
     loadAttendance();
   }, [loadAttendance]);
-
-  // Reload when screen comes into focus (e.g., after presensi on Absensi screen)
-  useFocusEffect(
-    useCallback(() => {
-      if (currentEmployee?.id) {
-        loadAttendance();
-      }
-    }, [loadAttendance, currentEmployee?.id])
-  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -556,19 +546,6 @@ export default function HomeScreen({ navigation }: Props) {
             });
           })()
         )}
-
-        {/* <View style={styles.activityCard}>
-          <View style={styles.activityIconContainer}>
-            <Ionicons name="document-outline" size={24} color="#4CAF50" />
-          </View>
-          <View style={styles.activityContent}>
-            <Text style={styles.activityTitle}>Pengajuan Izin</Text>
-            <Text style={styles.activityTime}>2 hari lalu</Text>
-          </View>
-          <View style={styles.activityStatus}>
-            <Text style={styles.activityStatusText}>Disetujui</Text>
-          </View>
-        </View> */}
       </View>
     </ScrollView>
   );

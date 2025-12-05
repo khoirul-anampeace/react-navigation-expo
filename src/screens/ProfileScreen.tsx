@@ -388,10 +388,10 @@ export default function ProfileScreen({ navigation }: Props) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Status Akun</Text>
           <View style={styles.card}>
-            <View style={styles.infoRow}>
+            {/* <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>User ID</Text>
               <Text style={styles.infoValue}>{user?.id || '-'}</Text>
-            </View>
+            </View> */}
             <View style={[styles.infoRow, styles.infoRowLast]}>
               <Text style={styles.infoLabel}>Status</Text>
               <View style={styles.statusBadge}>
