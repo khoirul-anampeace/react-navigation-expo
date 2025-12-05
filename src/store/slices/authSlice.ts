@@ -22,9 +22,14 @@ const initialState: AuthState = {
 // Async thunk untuk login
 export const loginUser = createAsyncThunk(
   'auth/login',
-  async (credentials: LoginCredentials, { rejectWithValue }) => {
+  async (credentials: LoginCredentials, { rejectWithValue, dispatch }) => {
     try {
       const response = await authService.login(credentials);
+
+      // After successful login, fetch employee data
+      const { fetchEmployeeByUserId } = await import('./employeeSlice');
+      dispatch(fetchEmployeeByUserId(response.user.id));
+
       return {
         user: response.user,
         accessToken: response.accessToken,
@@ -54,16 +59,25 @@ export const logoutUser = createAsyncThunk(
 // Async thunk untuk check auth saat app pertama kali dibuka
 export const checkAuth = createAsyncThunk(
   'auth/checkAuth',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, dispatch }) => {
     try {
       const isAuth = await authService.isAuthenticated();
       if (isAuth) {
         const user = await authService.getCurrentUser();
         const token = await authService.getAccessToken();
+
+        // If we have user data, also fetch employee data
+        if (user) {
+          const { fetchEmployeeByUserId } = await import('./employeeSlice');
+          dispatch(fetchEmployeeByUserId(user.id));
+        }
+
         return { user, accessToken: token };
       }
       return null;
     } catch (error: any) {
+      // If auth check fails, clear all stored data
+      await authService.logout();
       return rejectWithValue(error.message);
     }
   }

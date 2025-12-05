@@ -1,14 +1,31 @@
-import React from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { useEffect } from 'react';
+import { ActivityIndicator, DeviceEventEmitter, StyleSheet, View } from 'react-native';
 import { Provider } from 'react-redux';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import AuthNavigator from '../src/navigation/AuthNavigator';
 import RootNavigator from '../src/navigation/RootNavigator';
-import { useAppSelector } from '../src/store/hooks';
+import { useAppDispatch, useAppSelector } from '../src/store/hooks';
+import { checkAuth, logoutUser } from '../src/store/slices/authSlice';
 import { store } from '../src/store/store';
 
 function AppContent() {
+  const dispatch = useAppDispatch();
   const { isAuthenticated, isLoading } = useAppSelector((state) => state.auth);
+
+  // Check authentication status when app starts
+  useEffect(() => {
+    dispatch(checkAuth());
+  }, [dispatch]);
+
+  // Listen for forced logout events
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('forceLogout', () => {
+      console.log('🔄 Force logout triggered');
+      dispatch(logoutUser());
+    });
+
+    return () => subscription.remove();
+  }, [dispatch]);
 
   if (isLoading) {
     return (

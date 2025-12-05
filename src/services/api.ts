@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-// Base URL API 
+// Base URL API
 // const API_BASE_URL = 'http://10.10.180.205:5000/api';
 const API_BASE_URL = 'http://172.20.10.14:5000/api'; // IP Sindi
 
@@ -11,7 +11,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, 
+  timeout: 10000,
 });
 
 // Request interceptor - untuk attach token ke setiap request
@@ -40,28 +40,47 @@ apiClient.interceptors.response.use(
 
       try {
         const refreshToken = await AsyncStorage.getItem('refreshToken');
-        
+
         if (refreshToken) {
-          // Call refresh token endpoint
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
-            headers: {
-              Authorization: `Bearer ${refreshToken}`,
-            },
+          console.log('🔄 Token expired, refreshing...');
+
+          // Call refresh token endpoint - using the correct endpoint from your API tests
+          const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {
+            refreshToken
           });
 
           const { accessToken } = response.data;
-          
+
           // Save new access token
           await AsyncStorage.setItem('accessToken', accessToken);
-          
+
+          console.log('✅ Token refreshed successfully');
+
           // Retry original request dengan token baru
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return apiClient(originalRequest);
+        } else {
+          console.log('❌ No refresh token found, logging out');
+          // No refresh token, force logout
+          await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
+
+          // Emit a custom event to notify the app about logout
+          // This will help handle logout from any screen
+          const { DeviceEventEmitter } = require('react-native');
+          DeviceEventEmitter.emit('forceLogout');
+
+          return Promise.reject(new Error('Session expired. Please login again.'));
         }
-      } catch (refreshError) {
+      } catch (refreshError: any) {
+        console.log('❌ Refresh token failed:', refreshError.response?.data || refreshError.message);
         // Refresh token juga expired, logout user
         await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
-        return Promise.reject(refreshError);
+
+        // Emit logout event
+        const { DeviceEventEmitter } = require('react-native');
+        DeviceEventEmitter.emit('forceLogout');
+
+        return Promise.reject(new Error('Session expired. Please login again.'));
       }
     }
 

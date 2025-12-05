@@ -1,15 +1,19 @@
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import AuthService from '../services/authService';
+import EmployeeService from '../services/employeeService';
 
 interface User {
-  id: string;
-  name: string;
+  id: number;
   email: string;
-  nip: string;
-  department: string;
-  position: string;
-  joinDate: string;
-  phone: string;
   role: string;
+  employee?: {
+    id: number;
+    full_name: string;
+    department: string;
+    position: string;
+    phone: string;
+    employee_code: string;
+  };
 }
 
 interface AuthContextType {
@@ -33,15 +37,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAuthStatus = async () => {
     try {
-      // TODO: Check AsyncStorage untuk token/user data
-      // const token = await AsyncStorage.getItem('token');
-      // const userData = await AsyncStorage.getItem('user');
-      
-      // Simulasi checking auth
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Untuk testing, set null (belum login)
-      setUser(null);
+      setIsLoading(true);
+      const isAuth = await AuthService.isAuthenticated();
+
+      if (isAuth) {
+        const userData = await AuthService.getCurrentUser();
+        if (userData) {
+          // Get employee data to complete profile
+          try {
+            const employeeData = await EmployeeService.getEmployeeByUserId(userData.id);
+            setUser({
+              ...userData,
+              employee: {
+                id: employeeData.id,
+                full_name: employeeData.full_name,
+                department: employeeData.department,
+                position: employeeData.position,
+                phone: employeeData.phone,
+                employee_code: employeeData.employee_code,
+              }
+            });
+          } catch (error) {
+            console.error('Error loading employee data:', error);
+            // Still set user even if employee data fails
+            setUser(userData);
+          }
+        } else {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
     } catch (error) {
       console.error('Error checking auth:', error);
       setUser(null);
@@ -52,48 +78,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      // TODO: Call API login
-      // const response = await fetch('YOUR_API_URL/login', {
-      //   method: 'POST',
-      //   body: JSON.stringify({ email, password })
-      // });
-      
-      // Simulasi login (untuk testing)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Dummy user data
-      const userData: User = {
-        id: '1',
-        name: 'Himawari Uzumaki',
-        email: email,
-        nip: 'EMP25001',
-        department: 'IT',
-        position: 'Staff',
-        joinDate: '1 Februari 2024',
-        phone: '0898-7654-321',
-        role: 'Admin',
-      };
+      setIsLoading(true);
+      const loginResponse = await AuthService.login({ email, password });
 
-      // TODO: Save token & user data ke AsyncStorage
-      // await AsyncStorage.setItem('token', response.token);
-      // await AsyncStorage.setItem('user', JSON.stringify(userData));
-
-      setUser(userData);
-    } catch (error) {
+      // Get employee data after successful login
+      try {
+        const employeeData = await EmployeeService.getEmployeeByUserId(loginResponse.user.id);
+        setUser({
+          ...loginResponse.user,
+          employee: {
+            id: employeeData.id,
+            full_name: employeeData.full_name,
+            department: employeeData.department,
+            position: employeeData.position,
+            phone: employeeData.phone,
+            employee_code: employeeData.employee_code,
+          }
+        });
+      } catch (error) {
+        console.error('Error loading employee data after login:', error);
+        // Still set user even if employee data fails
+        setUser(loginResponse.user);
+      }
+    } catch (error: any) {
       console.error('Login error:', error);
-      throw new Error('Email atau password salah');
+      throw new Error(error.message || 'Email atau password salah');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const logout = async () => {
     try {
-      // TODO: Call API logout & clear AsyncStorage
-      // await AsyncStorage.removeItem('token');
-      // await AsyncStorage.removeItem('user');
-      
+      await AuthService.logout();
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
+      // Force clear user even if logout fails
+      setUser(null);
     }
   };
 
