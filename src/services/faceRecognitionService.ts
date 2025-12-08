@@ -2,7 +2,7 @@
 
 // Face Recognition Service - Python API Integration
 
-// const PYTHON_API_URL = 'http://10.10.180.205:8000';
+// const PYTHON_API_URL = 'http://192.168.137.64:8000';
 const PYTHON_API_URL = 'http://172.20.10.14:8000'; // IP Sindi
 
 /**
