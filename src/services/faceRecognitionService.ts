@@ -2,8 +2,8 @@
 
 // Face Recognition Service - Python API Integration
 
-const PYTHON_API_URL = 'http://192.168.1.11:8000';
-// const PYTHON_API_URL = 'http://172.20.10.14:8000'; // IP Sindi
+// const PYTHON_API_URL = 'http://192.168.1.11:8000';
+const PYTHON_API_URL = 'http://172.20.10.14:8000'; // IP Sindi
 
 /**
  * Encode single face from photo
@@ -17,7 +17,7 @@ export async function encodeFace(photoUri: string): Promise<number[]> {
       name: 'face.jpg',
     } as any);
 
-    // ✅ FIX: Manual timeout dengan AbortController
+    // Manual timeout dengan AbortController
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds
 
